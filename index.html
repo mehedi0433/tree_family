@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Our Family Tree</title>
+<style>
+:root{--bg:#081522;--panel:#11263a;--line:#58758e;--gold:#f2ca70;--text:#eef6ff;--muted:#b4c5d4}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#1b3a55,#081522 65%);color:var(--text);font:15px/1.5 Segoe UI,Arial,sans-serif}
+header{text-align:center;padding:28px 15px 12px}h1{font-size:clamp(28px,5vw,44px);margin:0}header p,.sub,.hint{color:var(--muted)}
+nav{display:flex;justify-content:center;gap:10px;padding:12px;flex-wrap:wrap}.tab{border:1px solid #48627b;background:#142b40;color:white;border-radius:24px;padding:11px 22px;font-weight:bold;cursor:pointer}.tab.active{background:var(--gold);color:#182536}
+main{max-width:1450px;margin:auto;padding:10px 18px 50px}.panel{display:none}.panel.active{display:block}.intro{text-align:center;margin:8px 0 22px}.intro h2{margin:0 0 5px}
+.search{max-width:520px;margin:0 auto 24px}.search input{width:100%;padding:14px 17px;border:1px solid #48627b;border-radius:13px;background:#0d2031;color:white;font-size:16px}
+
+/* Hexagon bubbles that grow as the cursor gets close */
+.bubbles{display:flex;flex-wrap:wrap;justify-content:center;gap:10px 8px;max-width:1120px;margin:auto;padding:30px 0}
+.bubble{--g:linear-gradient(145deg,#24516a,#142b42);position:relative;width:118px;height:136px;border:0;padding:0;margin:0;background:#6688a4;color:white;cursor:pointer;display:grid;place-items:center;text-align:center;font:650 14px/1.25 inherit;font-family:inherit;
+ clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);transition:transform .15s ease-out,background .15s;will-change:transform}
+.bubble:before{content:"";position:absolute;inset:2px;background:var(--g);clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%)}
+.bubble span{position:relative;padding:0 16px;overflow-wrap:anywhere}
+.bubble:nth-child(3n){--g:linear-gradient(145deg,#5c4b6d,#2d2b43)}
+.bubble:nth-child(3n+1){--g:linear-gradient(145deg,#245c58,#15363b)}
+.bubble:hover,.bubble:focus-visible{background:var(--gold);outline:none}
+
+.details{max-width:760px;margin:10px auto 0;padding:24px;background:linear-gradient(145deg,#17334d,#0e2032);border:1px solid #3e5b75;border-radius:18px;box-shadow:0 15px 40px #0005}.details h3{color:var(--gold);margin:0 0 14px;font-size:23px}.detail-grid{display:grid;grid-template-columns:minmax(150px,.8fr) 1.5fr}.detail-grid div{padding:10px 8px;border-bottom:1px solid #2c465d;overflow-wrap:anywhere}.key{color:var(--muted)}.val{font-weight:600}.hint{text-align:center;font-size:13px;margin:14px}
+.back{display:inline-block;margin:0 0 16px;border:1px solid #48627b;background:#142b40;color:white;border-radius:20px;padding:8px 18px;font-weight:bold;cursor:pointer}.back:hover{border-color:var(--gold)}
+[hidden]{display:none!important}
+
+.empty{text-align:center;color:var(--muted);padding:30px}
+.tree-card{border:1px solid #29465f;border-radius:18px;background:#091927aa;overflow:hidden}
+.legend{display:flex;justify-content:center;gap:20px;flex-wrap:wrap;padding:12px;font-size:13px;color:var(--muted);border-bottom:1px solid #29465f}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle}
+.tree-shell{overflow:auto;padding:30px 12px 50px}
+.tree{min-width:max-content;display:flex;justify-content:center;padding:0 24px}
+.tree ul{display:flex;justify-content:center;margin:0;padding:26px 0 0;list-style:none;position:relative}
+.tree>ul{padding-top:0}
+.tree li{position:relative;padding:26px 9px 0;display:flex;flex-direction:column;align-items:center}
+.tree>ul>li{padding-top:0}
+.tree li:before,.tree li:after{content:"";position:absolute;top:0;width:50%;height:26px;border-top:2px solid var(--line)}
+.tree li:before{right:50%}
+.tree li:after{left:50%;border-left:2px solid var(--line)}
+.tree>ul>li:before,.tree>ul>li:after,.tree li:only-child:before,.tree li:only-child:after{display:none}
+.tree li:only-child{padding-top:0}
+.tree li:first-child:before,.tree li:last-child:after{border-top:0}
+.tree li:last-child:after{border-left:0}
+.tree li:last-child:before{border-right:2px solid var(--line);border-radius:0 10px 0 0}
+.tree li:first-child:after{border-radius:10px 0 0 0}
+.tree ul ul:before{content:"";position:absolute;top:0;left:50%;margin-left:-1px;height:26px;border-left:2px solid var(--line)}
+.couple{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px;border:1px solid #8a744588;background:#2b3a4acc;border-radius:14px;box-shadow:0 6px 18px #0004}
+.person{border:1px solid #54748e;background:#183650;color:white;border-radius:10px;padding:9px 12px;min-width:70px;max-width:125px;font-weight:650;font-size:12px;cursor:pointer;font-family:inherit}
+.couple .person{white-space:nowrap;max-width:none}
+.person:hover{border-color:var(--gold);background:#285071}
+.person.spouse{background:#1d423f;border-color:#68b9a9}
+.person.root{background:#4a3a22;border-color:var(--gold);font-size:13px}
+@media(max-width:650px){.bubble{width:96px;height:111px;font-size:12px}.bubble span{padding:0 12px}.details{padding:16px}.detail-grid{grid-template-columns:1fr}.detail-grid div{padding:7px}.branches{gap:9px}.branch{min-width:135px}}
+</style></head><body>
+<header><h1>Our Family Tree</h1><p>Every name has a story. Explore our family connections.</p></header>
+<nav><button class="tab active" data-tab="pick">Pick Your Name</button><button class="tab" data-tab="tree">Family Tree</button></nav>
+<main>
+<section id="pick" class="panel active">
+ <div id="listView">
+  <div class="intro"><h2>Pick Your Name</h2><div class="sub">Move your cursor over the names, then select one to view details.</div></div>
+  <div class="search"><input id="search" type="search" placeholder="Search a family member…"></div>
+  <div id="bubbles" class="bubbles"></div>
+  <div class="hint">Search by first name or full name.</div>
+ </div>
+ <div id="detailView" hidden>
+  <div style="max-width:760px;margin:10px auto 0"><button class="back" id="backBtn">← All names</button></div>
+  <div id="details" class="details"></div>
+ </div>
+</section>
+<section id="tree" class="panel"><div class="intro"><h2>Family Tree</h2><div class="sub">Starting with Abdur Rahman Sarker and Amina Khatun.</div></div>
+<div class="tree-card"><div class="legend"><span><i style="background:#f2ca70"></i>Family member</span><span><i style="background:#68b9a9"></i>Spouse</span><span><i style="background:#8a7445"></i>Root generation</span></div><div class="tree-shell"><div class="tree" id="treeContent"></div></div></div><div class="hint">Scroll horizontally on smaller screens. Select any name to open their profile.</div></section>
+</main>
+<script>
+const people=[
+["Abdur Rahman Sarker",{spouse:"Amina Khatun",children:["Zohera Begum","Renuara Begum","Hena Begum","Rejia Begum","Belal Uddin Sarker","Delowar Hossain"]}],
+["Amina Khatun",{spouse:"Abdur Rahman Sarker",father:"[Not Available]",mother:"[Not Available]",children:["Zohera Begum","Renuara Begum","Hena Begum","Rejia Begum","Belal Uddin Sarker","Delowar Hossain"]}],
+["Zohera Begum",{father:"Abdur Rahman Sarker",mother:"Amina Khatun",spouse:"Abdul Jabbar",children:["Khokon","Liton","Lipon","Shopon","Akhi"]}],
+["Abdul Jabbar",{spouse:"Zohera Begum",children:["Khokon","Liton","Lipon","Shopon","Akhi"]}],
+["Khokon",{father:"Abdul Jabbar",mother:"Zohera Begum"}],["Liton",{father:"Abdul Jabbar",mother:"Zohera Begum"}],["Lipon",{father:"Abdul Jabbar",mother:"Zohera Begum"}],["Shopon",{father:"Abdul Jabbar",mother:"Zohera Begum"}],["Akhi",{father:"Abdul Jabbar",mother:"Zohera Begum"}],
+["Renuara Begum",{father:"Abdur Rahman Sarker",mother:"Amina Khatun",spouse:"Abu Jaher",children:["Kawsar","Janu"]}],["Abu Jaher",{spouse:"Renuara Begum",children:["Kawsar","Janu"]}],["Kawsar",{father:"Abu Jaher",mother:"Renuara Begum"}],["Janu",{father:"Abu Jaher",mother:"Renuara Begum"}],
+["Hena Begum",{father:"Abdur Rahman Sarker",mother:"Amina Khatun",spouse:"Bacchu Bhuiya",children:["Jabed","Jonayed","Mojahid","Lipi"]}],["Bacchu Bhuiya",{spouse:"Hena Begum",children:["Jabed","Jonayed","Mojahid","Lipi"]}],["Jabed",{father:"Bacchu Bhuiya",mother:"Hena Begum"}],["Jonayed",{father:"Bacchu Bhuiya",mother:"Hena Begum"}],["Mojahid",{father:"Bacchu Bhuiya",mother:"Hena Begum"}],["Lipi",{father:"Bacchu Bhuiya",mother:"Hena Begum"}],
+["Rejia Begum",{father:"Abdur Rahman Sarker",mother:"Amina Khatun",spouse:"Ali Akbar",children:["Monir","Rafiq","Jahangir"]}],["Ali Akbar",{spouse:"Rejia Begum",children:["Monir","Rafiq","Jahangir"]}],["Monir",{father:"Ali Akbar",mother:"Rejia Begum"}],["Rafiq",{father:"Ali Akbar",mother:"Rejia Begum"}],["Jahangir",{father:"Ali Akbar",mother:"Rejia Begum"}],
+["Belal Uddin Sarker",{father:"Abdur Rahman Sarker",mother:"Amina Khatun",spouse:"Ayesha Begum",children:["Nazmul Hoq","Enamul Hoq","Sohel Rana","Mehedi Hasan","Mohinoor Hossain"]}],["Ayesha Begum",{spouse:"Belal Uddin Sarker",children:["Nazmul Hoq","Enamul Hoq","Sohel Rana","Mehedi Hasan","Mohinoor Hossain"]}],
+["Nazmul Hoq",{father:"Belal Uddin Sarker",mother:"Ayesha Begum",spouse:"Halima Akter",children:["Naznin Jahan"]}],["Halima Akter",{spouse:"Nazmul Hoq",children:["Naznin Jahan"]}],["Naznin Jahan",{father:"Nazmul Hoq",mother:"Halima Akter"}],
+["Enamul Hoq",{father:"Belal Uddin Sarker",mother:"Ayesha Begum",spouse:"Khaleda Akter",children:["Shafayet Nuren Shaad","Sabrin Jahan Shobha"]}],["Khaleda Akter",{spouse:"Enamul Hoq",children:["Shafayet Nuren Shaad","Sabrin Jahan Shobha"]}],["Shafayet Nuren Shaad",{father:"Enamul Hoq",mother:"Khaleda Akter"}],["Sabrin Jahan Shobha",{father:"Enamul Hoq",mother:"Khaleda Akter"}],
+["Sohel Rana",{father:"Belal Uddin Sarker",mother:"Ayesha Begum",spouse:"Nahida Akter",children:["Naaba"]}],["Nahida Akter",{spouse:"Sohel Rana",children:["Naaba"]}],["Naaba",{father:"Sohel Rana",mother:"Nahida Akter"}],
+["Mehedi Hasan",{father:"Belal Uddin Sarker",mother:"Ayesha Begum",spouse:"Shimlatuj Jahan"}],["Shimlatuj Jahan",{spouse:"Mehedi Hasan"}],["Mohinoor Hossain",{father:"Belal Uddin Sarker",mother:"Ayesha Begum"}],
+["Delowar Hossain",{father:"Abdur Rahman Sarker",mother:"Amina Khatun",spouse:"Fatema Begum",children:["Safreen","Fahim","Saaba","Zeba"]}],["Fatema Begum",{spouse:"Delowar Hossain",children:["Safreen","Fahim","Saaba","Zeba"]}],["Safreen",{father:"Delowar Hossain",mother:"Fatema Begum"}],["Fahim",{father:"Delowar Hossain",mother:"Fatema Begum"}],["Saaba",{father:"Delowar Hossain",mother:"Fatema Begum"}],["Zeba",{father:"Delowar Hossain",mother:"Fatema Begum"}]
+];
+const db=new Map(people.map(([name,info])=>[name,{name,...info}]));
+const NA="[Not Available]";
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const $=id=>document.getElementById(id);
+
+function showList(){$("detailView").hidden=true;$("listView").hidden=false}
+function details(name){
+ const p=db.get(name);if(!p)return;
+ // Grandparents are the parents of this person's recorded father and mother.
+ const f=p.father&&db.get(p.father),m=p.mother&&db.get(p.mother);
+ const gf=[];const gm=[];
+ if(f?.father)gf.push("Paternal: "+f.father);if(m?.father&&m.father!==f?.father)gf.push("Maternal: "+m.father);
+ if(f?.mother)gm.push("Paternal: "+f.mother);if(m?.mother&&m.mother!==f?.mother)gm.push("Maternal: "+m.mother);
+ const rows=[["Name",p.name],["Father's name",p.father||NA],["Mother's name",p.mother||NA],["Spouse",p.spouse||NA],["Grandfather Name",gf.join(" | ")||NA],["Grandmother Name",gm.join(" | ")||NA],["Sons / Daughters Name",p.children?.join(", ")||NA]];
+ $("details").innerHTML=`<h3>${esc(p.name)}</h3><div class="detail-grid">${rows.map(([k,v])=>`<div class="key">${k}</div><div class="val">${esc(v)}</div>`).join("")}</div>`;
+ // Show only the selected person: hide the search and all other names
+ $("listView").hidden=true;$("detailView").hidden=false;
+ window.scrollTo({top:0,behavior:"smooth"});
+}
+function renderBubbles(q=""){
+ const found=people.filter(([n])=>n.toLowerCase().includes(q.toLowerCase()));
+ $("bubbles").innerHTML=found.length?found.map(([n])=>`<button class="bubble" data-name="${esc(n)}"><span>${esc(n)}</span></button>`).join(""):'<div class="empty">No family member found.</div>';
+ document.querySelectorAll(".bubble").forEach(b=>b.onclick=()=>details(b.dataset.name));
+}
+$("search").addEventListener("input",e=>renderBubbles(e.target.value));
+$("backBtn").onclick=()=>{showList();$("search").focus({preventScroll:true})};
+
+function showTab(id){document.querySelectorAll(".tab,.panel").forEach(x=>x.classList.remove("active"));document.querySelector(`[data-tab="${id}"]`).classList.add("active");$(id).classList.add("active")}
+function centerRoot(){const sh=document.querySelector(".tree-shell"),c=document.querySelector(".tree .couple");if(!sh||!c)return;const a=c.getBoundingClientRect(),b=sh.getBoundingClientRect();sh.scrollLeft+=(a.left+a.width/2)-(b.left+b.width/2)}
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{showTab(b.dataset.tab);if(b.dataset.tab==="pick")showList();if(b.dataset.tab==="tree")centerRoot()});
+
+/* Hexagons grow as the cursor (or finger) gets closer */
+const RADIUS=190,MAX_GROW=0.9;let raf=0,pt=null;
+function grow(){
+ raf=0;
+ document.querySelectorAll(".bubble").forEach(b=>{
+  let s=1;
+  if(pt){const r=b.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,d=Math.hypot(pt.x-cx,pt.y-cy),t=Math.max(0,1-d/RADIUS);s=1+MAX_GROW*t*t*(3-2*t)}
+  b.style.transform=s>1.001?`scale(${s.toFixed(3)})`:"";
+  b.style.zIndex=s>1.001?Math.round(s*10):"";
+ });
+}
+const bw=$("bubbles");
+bw.addEventListener("pointermove",e=>{pt={x:e.clientX,y:e.clientY};if(!raf)raf=requestAnimationFrame(grow)});
+bw.addEventListener("pointerleave",()=>{pt=null;if(!raf)raf=requestAnimationFrame(grow)});
+bw.addEventListener("pointerup",e=>{if(e.pointerType!=="mouse"){pt=null;if(!raf)raf=requestAnimationFrame(grow)}});
+
+function node(n,kind=""){return `<button class="person ${kind}" data-person="${esc(n)}">${esc(n)}</button>`}
+function coupleBox(n,root){const sp=db.get(n).spouse;return `<div class="couple">${node(n,root?"root":"")}${sp?node(sp,root?"root":"spouse"):""}</div>`}
+function build(n,root,boxed){
+ const kids=db.get(n).children||[];
+ const body=boxed?coupleBox(n,root):node(n);
+ const inner=kids.length?`<ul>${kids.map(k=>build(k,false,kids.some(x=>db.get(x).spouse))).join("")}</ul>`:"";
+ return `<li>${body}${inner}</li>`;
+}
+function renderTree(){
+ $("treeContent").innerHTML=`<ul>${build("Abdur Rahman Sarker",true,true)}</ul>`;
+ document.querySelectorAll("[data-person]").forEach(el=>el.onclick=()=>{showTab("pick");$("search").value="";renderBubbles();details(el.dataset.person)});
+}
+renderBubbles();renderTree();
+</script></body></html>
